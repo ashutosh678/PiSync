@@ -57,42 +57,135 @@ $ npm run test:e2e
 $ npm run test:cov
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
 ```bash
 $ npm install -g @nestjs/mau
 $ mau deploy
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+# PiSync Backend
 
-## Resources
+## Overview
 
-Check out a few resources that may come in handy when working with NestJS:
+The PiSync backend is a NestJS application designed to handle synchronization events from multiple devices. It provides RESTful APIs to manage and retrieve synchronization data.
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+## API Routes
 
-## Support
+### 1. **POST /api/sync-event**
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+- **Description**: Create a new synchronization event.
+- **Request Body**:
+  ```json
+  {
+    "device_id": "string",
+    "timestamp": "2025-05-08T10:34:43.000Z", // ISO 8601 date string
+    "total_files_synced": 100, // integer
+    "total_errors": 0, // integer
+    "internet_speed": 50 // integer, representing speed
+  }
+  ```
 
-## Stay in touch
+### 2. **GET /api/sync-event/device/:id/sync-history**
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+- **Description**: Retrieve the synchronization history for a specific device.
+- **Parameters**:
+  - `:id` - The ID of the device whose sync history you want to retrieve.
 
-## License
+### 3. **GET /api/sync-event/devices/repeated-failures**
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+- **Description**: Get devices with repeated synchronization failures.
+
+## Autocannon Test Results
+
+The performance test using `autocannon` for the `/api/sync-event` endpoint over 30 seconds with 100 concurrent connections yielded the following results:
+
+- **Average Requests per Second**: 11,566
+- **Average Latency**: 8.09 ms
+- **Total Requests**: 347,000
+- **Non-2xx Responses**: 346,969
+
+These results indicate that the endpoint is not currently handling requests successfully, as all responses were non-2xx.
+
+## Optimization for 100k Devices
+
+To optimize the system for handling 100,000 devices, consider the following strategies:
+
+1. **Scalability**:
+
+   - **Horizontal Scaling**: Deploy multiple instances of the application behind a load balancer to distribute the load.
+   - **Database Optimization**: Use a distributed database system or sharding to handle large volumes of data efficiently.
+
+2. **Performance**:
+
+   - **Caching**: Implement caching strategies (e.g., Redis) to reduce database load and improve response times.
+   - **Asynchronous Processing**: Use message queues (e.g., RabbitMQ, Kafka) for processing tasks asynchronously to improve throughput.
+
+3. **Monitoring and Logging**:
+
+   - **Real-time Monitoring**: Implement monitoring tools (e.g., Prometheus, Grafana) to track system performance and identify bottlenecks.
+   - **Detailed Logging**: Use structured logging to capture detailed information about requests and errors for debugging and analysis.
+
+4. **Code Optimization**:
+   - **Efficient Algorithms**: Review and optimize algorithms for processing synchronization data.
+   - **Reduce Latency**: Minimize network latency by optimizing API endpoints and reducing payload sizes.
+
+By implementing these strategies, the system can be better equipped to handle the demands of 100,000 devices efficiently.
+
+## Plans and Roadmap for Optimization and Scaling
+
+### Current State
+
+The PiSync backend is currently capable of handling a high number of requests per second, as demonstrated by the `autocannon` test results. However, this performance is achieved under conditions where the API is not loaded with heavy tasks. As the complexity and load of tasks increase, the current architecture may not sustain the same level of scalability.
+
+### Roadmap for Optimization and Scaling
+
+#### Short-term Goals
+
+1. **Code Optimization**:
+
+   - **Refactor Code**: Simplify and optimize existing code to improve performance.
+   - **Reduce Payload Sizes**: Optimize API responses to minimize data transfer and improve latency.
+
+2. **Database Optimization**:
+
+   - **Indexing**: Ensure that database queries are optimized with proper indexing.
+   - **Connection Pooling**: Configure database connection pooling to handle multiple concurrent connections efficiently.
+
+3. **Caching**:
+   - **Implement Caching**: Use Redis or similar caching solutions to store frequently accessed data and reduce database load.
+
+#### Medium-term Goals
+
+1. **Asynchronous Processing**:
+
+   - **Message Queues**: Introduce message queues (e.g., RabbitMQ, Kafka) to handle background tasks and offload processing from the main application.
+
+2. **Monitoring and Logging**:
+
+   - **Implement Monitoring Tools**: Use tools like Prometheus and Grafana to monitor system performance and identify bottlenecks.
+   - **Structured Logging**: Implement structured logging to capture detailed information about requests and errors for analysis.
+
+3. **Load Testing**:
+   - **Conduct Load Testing**: Regularly perform load testing to identify performance bottlenecks and optimize accordingly.
+
+#### Long-term Goals
+
+1. **Microservices Architecture**:
+
+   - **Decompose into Microservices**: Transition to a microservices architecture to improve scalability and maintainability. Each service can be independently developed, deployed, and scaled.
+   - **Service Discovery and Management**: Implement service discovery and management tools (e.g., Kubernetes) to orchestrate microservices.
+
+2. **Horizontal Scaling**:
+
+   - **Deploy Multiple Instances**: Use a load balancer to distribute traffic across multiple instances of the application.
+   - **Cloud Infrastructure**: Leverage cloud infrastructure (e.g., AWS, Azure) for auto-scaling and resource management.
+
+3. **Database Sharding**:
+
+   - **Implement Sharding**: Distribute database load by sharding data across multiple database instances.
+
+4. **API Gateway**:
+   - **Introduce an API Gateway**: Use an API gateway to manage and route requests to different microservices, providing a single entry point for clients.
+
+## Conclusion
+
+By following this roadmap, the PiSync backend can be optimized and scaled to handle increased load and complexity, ensuring it remains performant and reliable as the number of devices and tasks grows. Transitioning to a microservices architecture and leveraging cloud infrastructure will be key to achieving long-term scalability and flexibility.
